@@ -4,10 +4,11 @@ import re
 #fonction qui traite les caractaires speciaux dans les mots
 def replace(text):
     if re.search("[!,.?;:/*]",text):
-        return re.sub("[!,.?]","X",text)
-    if re.search("['{}[]()| `]",text):
-        #return "'\{}'".format(text)
-        return "NULL"
+        #return re.sub("[!,.?;:/*]","X",text)
+        return "X"
+    if re.search("['{}[]()| ]",text):
+        #return '\{}'.format(text)
+        return"NULL"
     if re.search("[%]",text):
         return "PERCENT"
     if re.search("[====]",text):
@@ -42,11 +43,12 @@ def exctraction(main_file,carac_file,outil_file,mot_recherche):
 
             for f in range(len(line)):
 
-                if line[f] !="" and line[f] !="``" and line[f]!="''" and line[f]!="\n" and line[f]!=" ":
+                if line[f] !=""  and line[f]!="''" and line[f]!="\n" and line[f]!=" ":
+
                     #ajouter le mot dans le dictionaire de mots
                     if replace(line[f])!="NULL" and not all_words.__contains__(line[f]):
                         all_words[replace(line[f])]=True
-                if line[f].__contains__(mot_recherche):
+                if line[f].__contains__(mot_recherche) and line[f][-2]=="_" and re.search("[0-9]",line[f][-1]):
                     #verifier si il existes au moins 2 mot avant
                     words_list.append([line[f]])
                     if f>1:
@@ -62,7 +64,9 @@ def exctraction(main_file,carac_file,outil_file,mot_recherche):
                             elif f-3>=0:
                                 words_list[-1].append("NULL")
                                 words_list[-1].append(replace(line[f-3]))
-
+                            else:
+                                words_list[-1].append("NULL")
+                                words_list[-1].append("NULL")
                         elif first_previous_word:
                             #seul le 1er mot d'avant est un mot outil
                             if f - 3 >= 0:
@@ -88,7 +92,10 @@ def exctraction(main_file,carac_file,outil_file,mot_recherche):
                         #il existe seulement un mot avant
                         words_list[-1].append("NULL")
                         words_list[-1].append(replace(line[f-1]))
-
+                    else:
+                        #il existe aucun mot avant
+                        words_list[-1].append("NULL")
+                        words_list[-1].append("NULL")
 
                     #verifier que il existe au moins 2 mot apres
                     if f<len(line)-3:
@@ -96,21 +103,24 @@ def exctraction(main_file,carac_file,outil_file,mot_recherche):
                         sec_after_word=check_if_outil(outil_file,line[f+2])
                         #verifier si les 2 mots apres sont des mots outil
                         if first_after_word and sec_after_word :
-                            if f+4<len(line):
+                            if f+4<len(line)-1:
                                 words_list[-1].append(replace(line[f+3]))
                                 words_list[-1].append(replace(line[f+4]))
-                            elif f+3<len(line):
+                            elif f+3<len(line)-1:
                                 words_list[-1].append(replace(line[f+3]))
                                 words_list[-1].append("NULL")
+                            else:
+                                words_list[-1].append("NULL")
+                                words_list[-1].append("NULL")
                         elif first_after_word:
-                            if f+3<len(line[f+3]):
+                            if f+3<len(line[f+3])-1:
                                 words_list[-1].append(replace(line[f+2]))
                                 words_list[-1].append(replace(line[f+3]))
                             else:
                                 words_list[-1].append("NULL")
                                 words_list[-1].append(replace(line[f+2]))
                         elif sec_after_word:
-                            if f+3<len(line):
+                            if f+3<len(line)-1:
                                 words_list[-1].append(replace(line[f+1]))
                                 words_list[-1].append(replace(line[f+3]))
                             else:
@@ -123,6 +133,10 @@ def exctraction(main_file,carac_file,outil_file,mot_recherche):
                     elif f<len(line)-1:
                         #il y'a un seul mot apres
                         words_list[-1].append(replace(line[f+1]))
+                        words_list[-1].append("NULL")
+                    else:
+                        #il y'a aucun mot apres
+                        words_list[-1].append("NULL")
                         words_list[-1].append("NULL")
 
     #la liste qui contient tout les mot de gauche et ceux de droite
@@ -153,6 +167,7 @@ def creer_fichier(list_mot,tout_mots):
     for l in list_mots:
         for x in range(1,len(l)):
             file.write(l[x]+",")
+        if l[0][-1]=="s":print(l[0])
         file.write(l[0][-1]+"\n")
 
     file.close()
@@ -166,16 +181,16 @@ def creer_fichier(list_mot,tout_mots):
 def parse_text(tout_mots):
     text = ""
     tout_mots = list(set(tout_mots))
-    tout_mots = [i for i in tout_mots if not i.__contains__("x")]
     for key in tout_mots:
+
         text += key + ","
     text = text[0:-1]
-    return text
+    return text+",NULL"
 
 if __name__=="__main__":
 
     list_mots,all_words=exctraction("/home/xpack/Desktop/ift3335/interest-original.txt","/home/xpack/Desktop/ift3335/carac.txt"
-                        ,"/home/xpack/Desktop/ift3335/mot_outil.txt","interest")
+                         ,"/home/xpack/Desktop/ift3335/mot_outil.txt","interest")
 
 
     creer_fichier(list_mots,all_words)
