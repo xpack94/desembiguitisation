@@ -19,6 +19,9 @@ def replace(text):
 
     return text
 
+
+
+
 def check_if_outil(file,c):
 
     with open(file,mode="r") as outil:
@@ -26,6 +29,48 @@ def check_if_outil(file,c):
             if x==c+'\n':
                return True
     return False
+
+
+
+
+
+def extraction_avec_stop_words(main_file,mot_recherche):
+    words_list = []
+    all_words=dict()
+    with open(main_file, mode='r') as mainf:
+        for i in mainf:
+            line = i.split(" ")
+        # suppression des caractaires vide
+            line = [x for x in line if x and x not in (',')]
+
+            for f in range(len(line)):
+                if line[f] != "" and line[f] != "''" and line[f] != "\n" and line[f] != " ":
+
+                    # ajouter le mot dans le dictionaire de mots
+                    if replace(line[f]) != "NULL" and not all_words.__contains__(line[f]):
+                        all_words[replace(line[f])] = True
+                if line[f].__contains__(mot_recherche) and line[f][-2] == "_" and re.search("[0-9]", line[f][-1]):
+                    words_list.append([line[f]])
+                    if f > 1:
+                        words_list[-1].append(replace(line[f-2]))
+                        words_list[-1].append(replace(line[f-1]))
+                    elif f==1:
+                        words_list[-1].append(replace(line[f-1]))
+                        words_list[-1].append("NULL")
+                    else:
+                        words_list[-1].append("NULL")
+                        words_list[-1].append("NULL")
+
+                    if f < len(line) - 3:
+                        words_list[-1].append(replace(line[f+1]))
+                        words_list[-1].append(replace(line[f+2]))
+                    elif f == len(line) - 3:
+                        words_list[-1].append(replace(line[f+1]))
+                        words_list[-1].append("NULL")
+                    else:
+                        words_list[-1].append("NULL")
+                        words_list[-1].append("NULL")
+    return words_list, all_words
 
 
 
@@ -147,7 +192,7 @@ def exctraction(main_file,carac_file,outil_file,mot_recherche):
 
 
 def creer_fichier(list_mot,tout_mots):
-    file= open("/home/xpack/Desktop/ift3335/file.arff","w")
+    file= open("/home/xpack/Desktop/ift3335/file2.arff","w")
     file.write("@RELATION interest \n\n")
     file.write("@ATTRIBUTE previousWord2 {")
     text=parse_text(tout_mots)
@@ -164,7 +209,7 @@ def creer_fichier(list_mot,tout_mots):
 
     file.write("@ATTRIBUTE class {1,2,3,4,5,6} \n")
     file.write("@DATA\n")
-    for l in list_mots:
+    for l in list_mot:
         for x in range(1,len(l)):
             file.write(l[x]+",")
         if l[0][-1]=="s":print(l[0])
@@ -189,8 +234,10 @@ def parse_text(tout_mots):
 
 if __name__=="__main__":
 
-    list_mots,all_words=exctraction("/home/xpack/Desktop/ift3335/interest-original.txt","/home/xpack/Desktop/ift3335/carac.txt"
-                         ,"/home/xpack/Desktop/ift3335/mot_outil.txt","interest")
+    # list_mots,all_words=exctraction("/home/xpack/Desktop/ift3335/interest-original.txt","/home/xpack/Desktop/ift3335/carac.txt"
+    #                      ,"/home/xpack/Desktop/ift3335/mot_outil.txt","interest")
 
-
-    creer_fichier(list_mots,all_words)
+    mots,tout_mots=extraction_avec_stop_words("/home/xpack/Desktop/ift3335/interest-original.txt","interest")
+    #creer_fichier(list_mots,all_words)
+    print(mots)
+    creer_fichier(mots,tout_mots)
