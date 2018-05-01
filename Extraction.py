@@ -30,6 +30,62 @@ def check_if_outil(file,c):
                return True
     return False
 
+#une fonction qui retourne un dictionaire contenant tout les mots et leurs types
+#example 'yields':NNS
+def get_types(file):
+    types=dict()
+    with open(file, mode='r') as mainf:
+        for i in mainf:
+            line = i.split(" ")
+            line = [x for x in line if x and x not in (",") and x!=""]
+            line = [ x for x in line if not x.__contains__("[") and not x.__contains__("]")
+                    and not x.__contains__("===") ]
+            for c in line:
+
+                index=c.find("/")
+                if index!=-1:
+                    types[c[0:index]]=replace(c[index+1:])
+                else:
+                    types[c]="NULL"
+        return types
+
+
+#fonction qui genere les types des mots d'avant et xeux d'apres
+#example NNS,NNS,NP,NULL,5
+def extraction_des_types(main_file,types_file,mot_recherche):
+    words_list = []
+    all_words = get_types(types_file)
+    with open(main_file, mode='r') as mainf:
+        for i in mainf:
+            line = i.split(" ")
+            # suppression des caractaires vide
+            line = [x for x in line if x and x not in (',') and not x.__contains__("===")]
+
+            for f in range(len(line)):
+
+                if line[f].__contains__(mot_recherche) and line[f][-2] == "_" and re.search("[0-9]", line[f][-1]):
+                    words_list.append([line[f]])
+
+                    if f > 1:
+                        words_list[-1].append(all_words[line[f-2]])
+                        words_list[-1].append(all_words[line[f-1]])
+                    elif f==1:
+                        words_list[-1].append(all_words[line[f-1]])
+                        words_list[-1].append("NULL")
+                    else:
+                        words_list[-1].append("NULL")
+                        words_list[-1].append("NULL")
+
+                    if f < len(line) - 3:
+                        words_list[-1].append(all_words[line[f+1]])
+                        words_list[-1].append(all_words[line[f+2]])
+                    elif f == len(line) - 3:
+                        words_list[-1].append(all_words[line[f+1]])
+                        words_list[-1].append("NULL")
+                    else:
+                        words_list[-1].append("NULL")
+                        words_list[-1].append("NULL")
+    return words_list, all_words
 
 
 
@@ -191,8 +247,8 @@ def exctraction(main_file,carac_file,outil_file,mot_recherche):
 
 
 
-def creer_fichier(list_mot,tout_mots):
-    file= open("/home/xpack/Desktop/ift3335/file2.arff","w")
+def creer_fichier(list_mot,tout_mots,nom_fichier):
+    file= open("/home/xpack/Desktop/ift3335/"+nom_fichier+".arff","w")
     file.write("@RELATION interest \n\n")
     file.write("@ATTRIBUTE previousWord2 {")
     text=parse_text(tout_mots)
@@ -232,12 +288,57 @@ def parse_text(tout_mots):
     text = text[0:-1]
     return text+",NULL"
 
+
+#generer le fichier des types
+def creer_fichier_types(list_mot,tout_mots,nom_fichier):
+    file= open("/home/xpack/Desktop/ift3335/"+nom_fichier+".arff","w")
+    file.write("@RELATION interest \n\n")
+    file.write("@ATTRIBUTE previousWord2 {")
+    text=parse_types(tout_mots)
+    file.write(text+"}\n")
+    file.write("@ATTRIBUTE previousWord1 {")
+    text=parse_types(tout_mots)
+    file.write(text+"}\n")
+    file.write("@ATTRIBUTE nextWord1 {")
+    text=parse_types(tout_mots)
+    file.write(text+"}\n")
+    file.write("@ATTRIBUTE nextWord2 {")
+    text=parse_types(tout_mots)
+    file.write(text+"}\n")
+
+    file.write("@ATTRIBUTE class {1,2,3,4,5,6} \n")
+    file.write("@DATA\n")
+    for l in list_mot:
+        for x in range(1,len(l)):
+            file.write(l[x]+",")
+        if l[0][-1]=="s":print(l[0])
+        file.write(l[0][-1]+"\n")
+
+    file.close()
+
+def parse_types(tout_mots):
+    text = ""
+    t=[]
+    print(tout_mots)
+    for key,val in tout_mots.items():
+        t.append(tout_mots[key])
+    t=list(set(t))
+    for x in t:
+        text+=x+","
+    text = text[0:-1]
+    return text
+
+
+
 if __name__=="__main__":
 
-    # list_mots,all_words=exctraction("/home/xpack/Desktop/ift3335/interest-original.txt","/home/xpack/Desktop/ift3335/carac.txt"
-    #                      ,"/home/xpack/Desktop/ift3335/mot_outil.txt","interest")
+    fichier_original="/home/xpack/Desktop/ift3335/interest-original.txt"
+    mots_outil="/home/xpack/Desktop/ift3335/mot_outil.txt"
+    fichier_des_types="/home/xpack/Desktop/ift3335/carac.txt"
 
-    mots,tout_mots=extraction_avec_stop_words("/home/xpack/Desktop/ift3335/interest-original.txt","interest")
-    #creer_fichier(list_mots,all_words)
-    print(mots)
-    creer_fichier(mots,tout_mots)
+    list_mots,all_words=exctraction(fichier_original,fichier_des_types,mots_outil,"interest")
+    mots,tout_mots=extraction_avec_stop_words(fichier_original,"interest")
+    creer_fichier(list_mots,all_words,"file1")
+    creer_fichier(mots,tout_mots,"file2")
+    list_types,all_types=extraction_des_types(fichier_original,fichier_des_types,"interest")
+    creer_fichier_types(list_types, all_types, "file3")
