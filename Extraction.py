@@ -1,5 +1,5 @@
 import re
-
+import os 
 
 #fonction qui traite les caractaires speciaux dans les mots
 def replace(text):
@@ -18,8 +18,6 @@ def replace(text):
 
 
     return text
-
-
 
 
 def check_if_outil(file,c):
@@ -248,7 +246,7 @@ def exctraction(main_file,carac_file,outil_file,mot_recherche):
 
 
 def creer_fichier(list_mot,tout_mots,nom_fichier):
-    file= open("/home/xpack/Desktop/ift3335/"+nom_fichier+".arff","w")
+    file= open(os.getcwd() + "/" + nom_fichier+".arff","w")
     file.write("@RELATION interest \n\n")
     file.write("@ATTRIBUTE previousWord2 {")
     text=parse_text(tout_mots)
@@ -274,11 +272,6 @@ def creer_fichier(list_mot,tout_mots,nom_fichier):
     file.close()
 
 
-
-    file.close()
-
-
-
 def parse_text(tout_mots):
     text = ""
     tout_mots = list(set(tout_mots))
@@ -291,7 +284,7 @@ def parse_text(tout_mots):
 
 #generer le fichier des types
 def creer_fichier_types(list_mot,tout_mots,nom_fichier):
-    file= open("/home/xpack/Desktop/ift3335/"+nom_fichier+".arff","w")
+    file= open(os.getcwd() + "/" +  nom_fichier + ".arff","w")
     file.write("@RELATION interest \n\n")
     file.write("@ATTRIBUTE previousWord2 {")
     text=parse_types(tout_mots)
@@ -328,17 +321,14 @@ def parse_types(tout_mots):
     text = text[0:-1]
     return text
 
-
-
 if __name__=="__main__":
-
-    fichier_original="/home/xpack/Desktop/ift3335/interest-original.txt"
-    mots_outil="/home/xpack/Desktop/ift3335/mot_outil.txt"
-    fichier_des_types="/home/xpack/Desktop/ift3335/carac.txt"
-
-    list_mots,all_words=exctraction(fichier_original,fichier_des_types,mots_outil,"interest")
-    mots,tout_mots=extraction_avec_stop_words(fichier_original,"interest")
-    creer_fichier(list_mots,all_words,"file1")
-    creer_fichier(mots,tout_mots,"file2")
-    list_types,all_types=extraction_des_types(fichier_original,fichier_des_types,"interest")
-    creer_fichier_types(list_types, all_types, "file3")
+	dir_path = os.getcwd()
+	fichier_original= dir_path + "/interest-original.txt"
+	mots_outil= dir_path + "/mot_outil.txt"
+	fichier_des_types= dir_path + "/carac.txt"
+	list_mots,all_words=exctraction(fichier_original,fichier_des_types,mots_outil,"interest")
+	mots,tout_mots=extraction_avec_stop_words(fichier_original,"interest")
+	creer_fichier(list_mots,all_words,"file1")
+	creer_fichier(mots,tout_mots,"file2")
+	list_types,all_types=extraction_des_types(fichier_original,fichier_des_types,"interest")
+	creer_fichier_types(list_types, all_types, "file3")
